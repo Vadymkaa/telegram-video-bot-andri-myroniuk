@@ -9,7 +9,6 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
-    ApplicationBuilder,
     CommandHandler,
     ContextTypes,
     MessageHandler,
@@ -25,7 +24,6 @@ VIDEO_SOURCES: List[str] = [
 DB_PATH = os.environ.get("DB_PATH", "users.db")
 BOT_TOKEN = "8101668293:AAE9nLdtt7f3C7JZ97Nt6j5NcEgBVstTjKI"
 SEND_INTERVAL_SECONDS = 24 * 60 * 60  # 24 години
-SEND_FIRST_IMMEDIATELY = True
 
 PORT = int(os.getenv("PORT", 8080))
 WEBHOOK_URL = f"https://{os.getenv('RAILWAY_STATIC_URL', '')}/webhook"
@@ -78,9 +76,7 @@ async def send_next_video(context: ContextTypes.DEFAULT_TYPE) -> None:
         last_index = row[0]
         next_index = (last_index + 1) % len(VIDEO_SOURCES)
 
-        source = VIDEO_SOURCES[next_index]
-        await context.bot.send_video(chat_id=chat_id, video=source)
-
+        await context.bot.send_video(chat_id=chat_id, video=VIDEO_SOURCES[next_index])
         cur.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
         conn.commit()
     except Exception:
@@ -104,6 +100,8 @@ def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int, first_in
 # ===================== ХЕНДЛЕРИ =====================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
+
+    # Додаємо або оновлюємо користувача в БД
     conn = get_db_conn()
     with conn:
         conn.execute(
@@ -112,10 +110,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
     conn.close()
 
-    first_in = 0 if SEND_FIRST_IMMEDIATELY else SEND_INTERVAL_SECONDS
-    schedule_user_job(context, chat_id, first_in)
+    # Відправляємо перше відео одразу
+    if VIDEO_SOURCES:
+        try:
+            await context.bot.send_video(chat_id=chat_id, video=VIDEO_SOURCES[0])
+            conn = get_db_conn()
+            with conn:
+                conn.execute(UPDATE_LAST_INDEX_SQL, (0, chat_id))
+            conn.close()
+        except Exception:
+            logger.exception("Помилка при відправці першого відео користувачу %s", chat_id)
 
-    await update.message.reply_text("Вітаю! Я надсилатиму тобі по одному відео щодня.")
+    # Наступне відео через інтервал
+    schedule_user_job(context, chat_id, first_in=SEND_INTERVAL_SECONDS)
+
+    await update.message.reply_text(
+        "Вітаю! Перше відео надіслано, далі буду надсилати по одному відео щодня."
+    )
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
@@ -194,7 +205,6 @@ def main():
     application.add_handler(CommandHandler("status", status_cmd))
     application.add_handler(MessageHandler(filters.VIDEO & filters.ChatType.PRIVATE, echo_video))
 
-    # Якщо є RAILWAY_STATIC_URL → запускаємо Webhook
     if os.getenv("RAILWAY_STATIC_URL"):
         application.run_webhook(
             listen="0.0.0.0",
