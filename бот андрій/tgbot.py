@@ -9,12 +9,12 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
+    ApplicationBuilder,
     CommandHandler,
     ContextTypes,
     MessageHandler,
     filters,
 )
-import asyncio
 
 # ===================== НАЛАШТУВАННЯ =====================
 VIDEO_SOURCES: List[str] = [
@@ -181,7 +181,7 @@ async def post_init(app: Application) -> None:
             name=f"daily_video_{chat_id}",
         )
 
-async def main():
+def main():
     application = (
         Application.builder()
         .token(BOT_TOKEN)
@@ -196,18 +196,14 @@ async def main():
 
     # Якщо є RAILWAY_STATIC_URL → запускаємо Webhook
     if os.getenv("RAILWAY_STATIC_URL"):
-        await application.bot.delete_webhook()
-        webhook_url = WEBHOOK_URL
-        await application.bot.set_webhook(url=webhook_url)
-        await application.run_webhook(
+        application.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path="webhook",
-            webhook_url=webhook_url
+            webhook_url=WEBHOOK_URL
         )
     else:
-        await application.bot.delete_webhook(drop_pending_updates=True)
-        await application.run_polling()
+        application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
