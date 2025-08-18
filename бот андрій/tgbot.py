@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 from typing import List
 
 from telegram import Update
@@ -22,9 +22,7 @@ VIDEO_SOURCES: List[str] = [
 ]
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
-BOT_TOKEN = "8101668293:AAE9nLdtt7f3C7JZ97Nt6j5NcEgBVstTjKI"
-SEND_INTERVAL_SECONDS = 24 * 60 * 60  # 24 години
-
+BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
 PORT = int(os.getenv("PORT", 8080))
 WEBHOOK_URL = f"https://{os.getenv('RAILWAY_STATIC_URL', '')}/webhook"
 
@@ -84,15 +82,15 @@ async def send_next_video(context: ContextTypes.DEFAULT_TYPE) -> None:
     finally:
         conn.close()
 
-def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int, first_in: float) -> None:
+def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    """Плануємо щоденну відправку о 09:20 ранку."""
     name = f"daily_video_{chat_id}"
     for j in context.job_queue.get_jobs_by_name(name):
         j.schedule_removal()
 
-    context.job_queue.run_repeating(
+    context.job_queue.run_daily(
         send_next_video,
-        interval=SEND_INTERVAL_SECONDS,
-        first=first_in,
+        time=time(hour=9, minute=20),
         chat_id=chat_id,
         name=name,
     )
@@ -121,11 +119,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         except Exception:
             logger.exception("Помилка при відправці першого відео користувачу %s", chat_id)
 
-    # Наступне відео через інтервал
-    schedule_user_job(context, chat_id, first_in=SEND_INTERVAL_SECONDS)
+    # Наступні відео щодня о 09:20
+    schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
-        "Вітаю! Перше відео надіслано, далі буду надсилати по одному відео щодня."
+        "Вітаю! Перше відео надіслано, далі щодня о 09:20 буду надсилати наступні."
     )
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -184,10 +182,9 @@ async def post_init(app: Application) -> None:
     conn.close()
 
     for chat_id, started_at, last_index in rows:
-        app.job_queue.run_repeating(
+        app.job_queue.run_daily(
             send_next_video,
-            interval=SEND_INTERVAL_SECONDS,
-            first=10,
+            time=time(hour=9, minute=20),
             chat_id=chat_id,
             name=f"daily_video_{chat_id}",
         )
