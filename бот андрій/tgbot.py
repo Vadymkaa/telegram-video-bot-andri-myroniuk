@@ -22,7 +22,7 @@ VIDEO_SOURCES: List[str] = [
 ]
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
-BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+BOT_TOKEN = "8101668293:AAE9nLdtt7f3C7JZ97Nt6j5NcEgBVstTjKI"
 PORT = int(os.getenv("PORT", 8080))
 WEBHOOK_URL = f"https://{os.getenv('RAILWAY_STATIC_URL', '')}/webhook"
 
@@ -214,3 +214,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
