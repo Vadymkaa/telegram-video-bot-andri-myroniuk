@@ -83,14 +83,14 @@ async def send_next_video(context: ContextTypes.DEFAULT_TYPE) -> None:
         conn.close()
 
 def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
-    """Плануємо щоденну відправку о 09:20 ранку."""
+    """Плануємо щоденну відправку о 07:00 ранку."""
     name = f"daily_video_{chat_id}"
     for j in context.job_queue.get_jobs_by_name(name):
         j.schedule_removal()
 
     context.job_queue.run_daily(
         send_next_video,
-        time=time(hour=9, minute=20),
+        time=time(hour=7, minute=0),
         chat_id=chat_id,
         name=name,
     )
@@ -119,11 +119,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         except Exception:
             logger.exception("Помилка при відправці першого відео користувачу %s", chat_id)
 
-    # Наступні відео щодня о 09:20
+    # Наступні відео щодня о 07:00
     schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
-        "Вітаю! Перше відео надіслано, далі щодня о 09:20 буду надсилати наступні."
+        "Вітаю! Перше відео надіслано, далі щодня о 07:00 буду надсилати наступні."
     )
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -184,7 +184,7 @@ async def post_init(app: Application) -> None:
     for chat_id, started_at, last_index in rows:
         app.job_queue.run_daily(
             send_next_video,
-            time=time(hour=9, minute=20),
+            time=time(hour=7, minute=0),
             chat_id=chat_id,
             name=f"daily_video_{chat_id}",
         )
@@ -214,4 +214,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
