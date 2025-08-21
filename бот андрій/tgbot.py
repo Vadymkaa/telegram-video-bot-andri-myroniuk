@@ -90,7 +90,7 @@ def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
 
     context.job_queue.run_daily(
         send_next_video,
-        time=time(hour=7, minute=0),
+        time=time(hour=7, minute=1),
         chat_id=chat_id,
         name=name,
     )
@@ -214,4 +214,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
