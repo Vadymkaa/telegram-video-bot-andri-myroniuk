@@ -123,7 +123,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
-        "Вітаю! Перше відео надіслано, далі щодня о 07:00 буду надсилати наступні."
+        "Вітаю! Перше відео надіслано, далі щодня о 10:00 буду надсилати наступні."
     )
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -214,3 +214,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
