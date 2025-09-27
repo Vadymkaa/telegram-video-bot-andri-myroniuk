@@ -17,8 +17,8 @@ from telegram.ext import (
 
 # ===================== НАЛАШТУВАННЯ =====================
 VIDEO_SOURCES: List[str] = [
-    "BAACAgIAAxkBAAMDaJ2FmSUaqJHK8QMifzVXlBzVedQAAi59AAKhIelIj65YngFyDuk2BA",
-    "BAACAgIAAxkBAAMZaJ2IJY_C-gGkKV5phQnBWEJ2pYoAAkp9AAKhIelI1LisVtq0YbA2BA",
+    "BAACAgIAAxkBAAIBF2jYWKJ-oU85gIgRpEtI61aH4qaDAAJ-jQACdPzBSpHZRi2F_qMjNgQ",
+    "BAACAgIAAxkBAAIBF2jYWKJ-oU85gIgRpEtI61aH4qaDAAJ-jQACdPzBSpHZRi2F_qMjNgQ",
     # додайте ще свої відео
 ]
 
@@ -239,4 +239,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
