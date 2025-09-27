@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 from typing import List
 
 from telegram import Update
@@ -19,13 +19,13 @@ from telegram.ext import (
 VIDEO_SOURCES: List[str] = [
     "BAACAgIAAxkBAAMDaJ2FmSUaqJHK8QMifzVXlBzVedQAAi59AAKhIelIj65YngFyDuk2BA",
     "BAACAgIAAxkBAAMZaJ2IJY_C-gGkKV5phQnBWEJ2pYoAAkp9AAKhIelI1LisVtq0YbA2BA",
+    # додайте ще свої відео
 ]
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8101668293:AAE9nLdtt7f3C7JZ97Nt6j5NcEgBVstTjKI")
-SEND_INTERVAL_SECONDS = 24 * 60 * 60  # 24 години
-SEND_FIRST_IMMEDIATELY = True  # Надсилати перший ролик одразу
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN")
 
+# Логування
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -58,6 +58,7 @@ def get_db_conn():
 
 # ===================== ЛОГІКА ВІДПРАВКИ =====================
 async def send_next_video(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Надсилає користувачу 7 відео підряд щодня о 10:01"""
     job = context.job
     chat_id = job.chat_id
 
@@ -75,12 +76,20 @@ async def send_next_video(context: ContextTypes.DEFAULT_TYPE) -> None:
             return
 
         last_index = row[0]
-        next_index = (last_index + 1) % len(VIDEO_SOURCES)
-        source = VIDEO_SOURCES[next_index]
 
-        await context.bot.send_video(chat_id=chat_id, video=source)
+        # надсилаємо одразу 7 відео
+        for i in range(7):
+            next_index = (last_index + 1 + i) % len(VIDEO_SOURCES)
+            source = VIDEO_SOURCES[next_index]
 
-        cur.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
+            await context.bot.send_video(
+                chat_id=chat_id,
+                video=source,
+                caption=f"Відео {next_index + 1} з {len(VIDEO_SOURCES)} 🎬"
+            )
+
+        # оновлюємо індекс (останнє надіслане)
+        cur.execute(UPDATE_LAST_INDEX_SQL, ((last_index + 7) % len(VIDEO_SOURCES), chat_id))
         conn.commit()
     except Exception:
         logger.exception("Помилка при відправці відео користувачу %s", chat_id)
@@ -88,15 +97,15 @@ async def send_next_video(context: ContextTypes.DEFAULT_TYPE) -> None:
         conn.close()
 
 
-def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int, first_in: float) -> None:
+def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    """Запускає щоденну розсилку о 10:01"""
     name = f"daily_video_{chat_id}"
     for j in context.job_queue.get_jobs_by_name(name):
         j.schedule_removal()
 
-    context.job_queue.run_repeating(
+    context.job_queue.run_daily(
         send_next_video,
-        interval=SEND_INTERVAL_SECONDS,
-        first=first_in,
+        time=time(10, 1),  # кожного дня о 10:01
         chat_id=chat_id,
         name=name,
     )
@@ -113,13 +122,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
     conn.close()
 
-    first_in = 0 if SEND_FIRST_IMMEDIATELY else SEND_INTERVAL_SECONDS
-    schedule_user_job(context, chat_id, first_in)
+    # одразу перше відео
+    first_video = VIDEO_SOURCES[0]
+    await context.bot.send_video(
+        chat_id=chat_id,
+        video=first_video,
+        caption="Перше відео одразу 🎬"
+    )
+
+    # ставимо щоденну розсилку
+    schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
         f"Вітаю, {update.effective_user.first_name or 'друже'}! "
-        f"Я надсилатиму тобі по одному відео щодня.\n"
-        f"Команди: /status, /stop, /help"
+        f"Ти отримав перше відео одразу, а далі щодня о 10:01 буде приходити 7 нових."
     )
 
 
@@ -155,15 +171,14 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_text(
         f"Старт: <code>{started_at}</code>\n"
         f"Надіслано: <b>{sent}</b> із <b>{total}</b>\n"
-        f"Залишилось: <b>{total - sent}</b>\n"
-        f"(інтервал: {SEND_INTERVAL_SECONDS // 3600} годин)",
+        f"(щодня о 10:01 надсилається 7 відео)",
         parse_mode=ParseMode.HTML,
     )
 
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        "Я надсилаю по одному відео щодня після /start.\n\n"
+        "Я надсилаю 7 відео щодня о 10:01 після /start.\n\n"
         "Команди:\n/start — підписатися\n/stop — відписатися\n/status — прогрес\n/help — довідка"
     )
 
@@ -190,10 +205,9 @@ async def post_init(app: Application) -> None:
     conn.close()
 
     for chat_id, _, last_index in rows:
-        app.job_queue.run_repeating(
+        app.job_queue.run_daily(
             send_next_video,
-            interval=SEND_INTERVAL_SECONDS,
-            first=10,
+            time=time(10, 1),
             chat_id=chat_id,
             name=f"daily_video_{chat_id}",
         )
