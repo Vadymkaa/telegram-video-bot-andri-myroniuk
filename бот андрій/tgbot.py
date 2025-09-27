@@ -23,7 +23,7 @@ VIDEO_SOURCES: List[str] = [
 ]
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8101668293:AAE9nLdtt7f3C7JZ97Nt6j5NcEgBVstTjKI")
 
 # Логування
 logging.basicConfig(
@@ -239,3 +239,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
