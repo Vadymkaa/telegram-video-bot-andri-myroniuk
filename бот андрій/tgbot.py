@@ -27,21 +27,13 @@ VIDEO_SOURCES: List[str] = [
 ]
 
 BEFORE_TEXTS: List[str] = [
-    """Привіт 👋
-Вітаю тебе на інтенсиві «Стратегічне мислення у житті»!
-...""",
-    """Привіт! Це другий день інтенсиву «Стратегічне мислення у житті».
-...""",
-    """Привіт! Це вже третій день інтенсиву.
-...""",
-    """Привіт! Сьогодні четвертий день інтенсиву.
-...""",
-    """Привіт! Це вже п’ятий день 🚀
-...""",
-    """Привіт! День шостий, і він про головне джерело росту — твій досвід.
-...""",
-    """Привіт! Ми на фініші 🎉 Це сьомий день інтенсиву.
-...""",
+    "Привіт 👋\nВітаю тебе на інтенсиві «Стратегічне мислення у житті»!",
+    "Привіт! Це другий день інтенсиву «Стратегічне мислення у житті».",
+    "Привіт! Це вже третій день інтенсиву.",
+    "Привіт! Сьогодні четвертий день інтенсиву.",
+    "Привіт! Це вже п’ятий день 🚀",
+    "Привіт! День шостий, і він про головне джерело росту — твій досвід.",
+    "Привіт! Ми на фініші 🎉 Це сьомий день інтенсиву.",
 ]
 
 AFTER_TEXTS: List[str] = [
@@ -68,6 +60,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ===================== SQL =====================
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     chat_id INTEGER PRIMARY KEY,
@@ -91,13 +84,14 @@ def get_db_conn():
 
 
 # ===================== ЛОГІКА ВІДПРАВКИ =====================
-async def send_video_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     chat_id = job.chat_id
+
     try:
         conn = get_db_conn()
         cur = conn.cursor()
-        cur.execute("SELECT last_index FROM users WHERE chat_id=?;", (chat_id,))
+        cur.execute("SELECT last_index FROM users WHERE chat_id=?", (chat_id,))
         row = cur.fetchone()
         if not row:
             job.schedule_removal()
@@ -106,33 +100,27 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         last_index = row[0]
         next_index = last_index + 1
 
-        if next_index >= 8:
-            final_text = "Фінал..."  # скорочено
-            await context.bot.send_message(chat_id=chat_id, text=final_text)
-            await context.bot.send_video(chat_id=chat_id, video="ВАШ_ФІНАЛЬНИЙ_VIDEO_FILE_ID")
-            cur.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
-            conn.commit()
+        if next_index >= len(VIDEO_SOURCES):
+            await context.bot.send_message(chat_id=chat_id, text="📌 Розсилка завершена!")
             job.schedule_removal()
             return
 
-        # Перед відео
+        # Відео перед текстом
         if next_index < len(BEFORE_TEXTS):
             await context.bot.send_message(chat_id=chat_id, text=BEFORE_TEXTS[next_index])
 
-        # Відео
-        source = VIDEO_SOURCES[next_index % len(VIDEO_SOURCES)]
-        await context.bot.send_video(chat_id=chat_id, video=source, caption=f"🎬 Відео {next_index + 1} з 7")
+        source = VIDEO_SOURCES[next_index]
+        await context.bot.send_video(chat_id=chat_id, video=source, caption=f"🎬 Відео {next_index+1} з {len(VIDEO_SOURCES)}")
 
-        # Оновлюємо last_index
         cur.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
         conn.commit()
 
-        # Запланувати after_text на 07:20
+        # Плануємо after_text о 07:20
         context.job_queue.run_daily(
             send_after_text_job,
             time=time(7, 20),
             chat_id=chat_id,
-            name=f"after_text_{chat_id}",
+            name=f"after_text_{chat_id}"
         )
 
     except Exception:
@@ -141,13 +129,14 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         conn.close()
 
 
-async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     chat_id = job.chat_id
+
     try:
         conn = get_db_conn()
         cur = conn.cursor()
-        cur.execute("SELECT last_index FROM users WHERE chat_id=?;", (chat_id,))
+        cur.execute("SELECT last_index FROM users WHERE chat_id=?", (chat_id,))
         row = cur.fetchone()
         if not row:
             job.schedule_removal()
@@ -172,85 +161,61 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # ===================== ХЕНДЛЕРИ =====================
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     conn = get_db_conn()
     with conn:
-        conn.execute(
-            UPSERT_USER_SQL,
-            (chat_id, datetime.now(timezone.utc).isoformat(), -1),
-        )
+        conn.execute(UPSERT_USER_SQL, (chat_id, datetime.now(timezone.utc).isoformat(), -1))
     conn.close()
 
-    first_video_index = 0
-    await context.bot.send_video(chat_id=chat_id, video=VIDEO_SOURCES[first_video_index], caption=BEFORE_TEXTS[first_video_index])
+    # Перше відео одразу
+    first_index = 0
+    await context.bot.send_video(chat_id=chat_id, video=VIDEO_SOURCES[first_index], caption=BEFORE_TEXTS[first_index])
 
+    # Оновлюємо last_index
     conn = get_db_conn()
     with conn:
-        conn.execute(UPDATE_LAST_INDEX_SQL, (first_video_index, chat_id))
+        conn.execute(UPDATE_LAST_INDEX_SQL, (first_index, chat_id))
     conn.close()
 
+    # Плануємо щоденні відео
     schedule_user_job(context, chat_id)
-    await update.message.reply_text("Ти отримав перше відео, далі щодня о 07:01 + after-text о 07:20.")
+
+    await update.message.reply_text("✅ Ти підписався! Розсилка почалась.")
 
 
-def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
-    name = f"daily_video_{chat_id}"
-    for j in context.job_queue.get_jobs_by_name(name):
+def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
+    # Видаляємо старі job
+    for j in context.job_queue.get_jobs_by_name(f"daily_video_{chat_id}"):
         j.schedule_removal()
 
     context.job_queue.run_daily(
         send_video_job,
         time=time(7, 1),
         chat_id=chat_id,
-        name=name,
+        name=f"daily_video_{chat_id}"
     )
 
-    # Перше відео одразу
-    first_video_index = 0
-    await context.bot.send_video(
-        chat_id=chat_id,
-        video=VIDEO_SOURCES[first_video_index],
-        caption=BEFORE_TEXTS[first_video_index],
-    )
 
-    # Оновлюємо last_index = 0, щоб наступне відео було індекс 1
-    conn = get_db_conn()
-    with conn:
-        conn.execute(UPDATE_LAST_INDEX_SQL, (first_video_index, chat_id))
-    conn.close()
-
-    # Плануємо наступні відправки
-    schedule_user_job(context, chat_id)
-
-    await update.message.reply_text("✅ Ти підписався! Розсилка почалась.")
-
-
-async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
-    # Видаляємо задачі для цього чату
     for j in context.job_queue.get_jobs_by_name(f"daily_video_{chat_id}"):
         j.schedule_removal()
 
-    # Видаляємо користувача з БД
     conn = get_db_conn()
     with conn:
         conn.execute(DELETE_USER_SQL, (chat_id,))
     conn.close()
 
-    await update.message.reply_text(
-        "🛑 Зупинив розсилку й видалив твій прогрес.\n"
-        "Щоб повернутись — натисни /start"
-    )
+    await update.message.reply_text("🛑 Розсилка зупинена та прогрес видалено.")
 
 
-async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-
     conn = get_db_conn()
     cur = conn.cursor()
-    cur.execute("SELECT started_at, last_index FROM users WHERE chat_id=?;", (chat_id,))
+    cur.execute("SELECT started_at, last_index FROM users WHERE chat_id=?", (chat_id,))
     row = cur.fetchone()
     conn.close()
 
@@ -263,50 +228,32 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     sent = max(0, last_index + 1)
 
     await update.message.reply_text(
-        f"📅 Старт: <code>{started_at}</code>\n"
-        f"📦 Надіслано: <b>{sent}</b> із <b>{total}</b>\n"
-        f"(щодня о 10:01 надсилається відео з текстами)",
-        parse_mode=ParseMode.HTML,
+        f"📅 Старт: <code>{started_at}</code>\n📦 Надіслано: <b>{sent}</b> із <b>{total}</b>",
+        parse_mode=ParseMode.HTML
     )
 
 
-async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "👋 Я надсилаю відео щодня о 10:01 після команди /start.\n\n"
-        "📌 Команди:\n"
-        "/start — підписатися\n"
-        "/stop — відписатися\n"
-        "/status — переглянути прогрес\n"
-        "/help — довідка"
+        "👋 Я надсилаю відео щодня о 07:01.\n\n"
+        "📌 Команди:\n/start — підписатися\n/stop — відписатися\n/status — переглянути прогрес\n/help — довідка"
     )
 
 
-async def echo_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message:
-        # Відео
-        if update.message.video:
-            await update.message.reply_text(
-                f"🎥 Отримав video file_id: <code>{update.message.video.file_id}</code>",
-                parse_mode=ParseMode.HTML,
-            )
-        # Документ (PDF, DOCX, ZIP, тощо)
-        elif update.message.document:
-            await update.message.reply_text(
-                f"📂 Отримав document file_id: <code>{update.message.document.file_id}</code>",
-                parse_mode=ParseMode.HTML,
-            )
+async def echo_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.video:
+        await update.message.reply_text(f"🎥 video file_id: <code>{update.message.video.file_id}</code>", parse_mode=ParseMode.HTML)
+    elif update.message.document:
+        await update.message.reply_text(f"📂 document file_id: <code>{update.message.document.file_id}</code>", parse_mode=ParseMode.HTML)
 
 
 # ===================== INIT APP =====================
-
-async def post_init(app: Application) -> None:
-    # Створюємо таблицю
+async def post_init(app: Application):
     conn = get_db_conn()
     with conn:
         conn.execute(CREATE_TABLE_SQL)
     conn.close()
 
-    # Відновлюємо розсилки для існуючих користувачів
     conn = get_db_conn()
     cur = conn.cursor()
     cur.execute(GET_ALL_USERS_SQL)
@@ -314,45 +261,26 @@ async def post_init(app: Application) -> None:
     conn.close()
 
     for chat_id, _, last_index in rows:
-        if last_index < 8:  # обмеження на кількість відео
-            app.job_queue.run_daily(
-                send_video_job,
-                time=time(7, 1),
-                chat_id=chat_id,
-                name=f"daily_video_{chat_id}",
-            )
-            logger.info(
-                "Відновив розсилку для chat_id=%s (last_index=%s)",
-                chat_id, last_index
-            )
+        if last_index < len(VIDEO_SOURCES):
+            app.job_queue.run_daily(send_video_job, time=time(7, 1), chat_id=chat_id, name=f"daily_video_{chat_id}")
+            logger.info("Відновив розсилку для chat_id=%s (last_index=%s)", chat_id, last_index)
 
 
-def main() -> None:
+def main():
     if not BOT_TOKEN:
         raise RuntimeError("Не задано BOT_TOKEN у змінній середовища!")
 
-    application = (
-        Application.builder()
-        .token(BOT_TOKEN)
-        .post_init(post_init)
-        .build()
-    )
+    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
-    # Хендлери команд
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("stop", stop))
-    application.add_handler(CommandHandler("status", status_cmd))
-    application.add_handler(CommandHandler("help", help_cmd))
+    # Хендлери
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("stop", stop))
+    app.add_handler(CommandHandler("status", status_cmd))
+    app.add_handler(CommandHandler("help", help_cmd))
+    app.add_handler(MessageHandler((filters.VIDEO | filters.Document.ALL) & filters.ChatType.PRIVATE, echo_file))
 
-    # Хендлер файлів (відео/документи)
-    application.add_handler(
-        MessageHandler(
-            (filters.VIDEO | filters.Document.ALL) & filters.ChatType.PRIVATE,
-            echo_file,
-        )
-    )
-
-    application.run_polling()
+    app.run_polling()
 
 
-
+if __name__ == "__main__":
+    main()
