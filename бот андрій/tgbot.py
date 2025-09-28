@@ -300,7 +300,7 @@ async def post_init(app: Application) -> None:
     for chat_id, _, last_index in rows:
         if last_index < 8:
             app.job_queue.run_daily(
-                send_next_video,
+                send_video_job,
                 time=time(10, 1),
                 chat_id=chat_id,
                 name=f"daily_video_{chat_id}",
@@ -331,4 +331,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
