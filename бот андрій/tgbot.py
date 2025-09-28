@@ -206,20 +206,6 @@ def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
         name=name,
     )
 
-# ===================== ХЕНДЛЕРИ =====================
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
-    conn = get_db_conn()
-
-    # Створюємо користувача з last_index=-1
-    with conn:
-        conn.execute(
-            UPSERT_USER_SQL,
-            (chat_id, datetime.now(timezone.utc).isoformat(), -1),
-        )
-    conn.close()
-
     # Перше відео одразу
     first_video_index = 0
     await context.bot.send_video(
@@ -367,5 +353,6 @@ def main() -> None:
     )
 
     application.run_polling()
+
 
 
