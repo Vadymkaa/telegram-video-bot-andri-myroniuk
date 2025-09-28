@@ -17,13 +17,13 @@ from telegram.ext import (
 
 # ===================== НАЛАШТУВАННЯ =====================
 VIDEO_SOURCES: List[str] = [
-    "BAACAgIAAxkBAAIBF2jYWKJ-oU85gIgRpEtI61aH4qaDAAJ-jQACdPzBSpHZRi2F_qMjNgQ",
-    "BAACAgIAAxkBAAIBHGjY7MU7QUdNqNq8YXHRQvF1qTdaAAJ0fAACdPzJSjvFOkJUgG-jNgQ",
-    "BAACAgIAAxkBAAIBHmjY7X5x7Tn5ZI47zyesssApwvzlAAJ_fAACdPzJSm2g2qazpe6nNgQ",
-    "BAACAgIAAxkBAAIBIGjY7dEa57kfOApIqY7hIVHWoTYqAAKGfAACdPzJSjDlsMLlL9dKNgQ",
-    "BAACAgIAAxkBAAIBImjY7mvAOB4qIhRUwtkQ_F_INtwqAAKRfAACdPzJSh-ZC15_tjVaNgQ",
-    "BAACAgIAAxkBAAIBJGjY7qck92dkxlpuupFJSpKQfoA-AAKYfAACdPzJSpjYl5gUKA7_NgQ",
-    "BAACAgIAAxkBAAIBJmjY7uc5yRSnRoOfL6mVqO5TmtrrAAKbfAACdPzJSvDN7ArHL0OINgQ",
+    "BAACAgIAAxkBAAMIaNlpPylHKMYZj9MoYA6dWh83VKQAArd8AALpGdBKSyJjl6C4OTY2BA",
+    "BAACAgIAAxkBAAMKaNlpu6rlFEbEpZ0gvlr8IhCEBG4AAsR8AALpGdBKG8dSjvSb6zs2BA",
+    "BAACAgIAAxkBAAMMaNlqRSFlK2EJnZLZ5PqCqFevI58AAtB8AALpGdBKdF_gAAHRlt5TNgQ",
+    "BAACAgIAAxkBAAMOaNlqgMIQXDCMQGlEqiPM0FCp27MAAtV8AALpGdBKG_9JlTB3Xng2BA",
+    "BAACAgIAAxkBAAMQaNlqyuOKdAUNmWZPXA8n7Ghsvc0AAt18AALpGdBKqWm7YCaVTDU2BA",
+    "BAACAgIAAxkBAAMSaNlrBt0eBjzX3JjxNyjRDSwYeoMAAuV8AALpGdBKcvo-xakimQc2BA",
+    "BAACAgIAAxkBAAMUaNlreqvtgzvK40SXJhI_Eybqb7cAAu98AALpGdBKP1_258Gm8N42BA",
 ]
 
 BEFORE_TEXTS: List[str] = [
@@ -92,8 +92,8 @@ AFTER_TEXTS: List[str] = [
 ]
 
 EXTRA_FILES = {
-    2: {"file_id": "BQACAgIAAxkBAAIBOmjZA5mDPZBPQiW_nS_zM0TVsSFlAAKJfgACdPzJSq8FmfNq1TcXNgQ", "caption": "📄 Обіцяний файл до другого дня 🚀"},
-    4: {"file_id": "BQACAgIAAxkBAAIBPGjZA-ExwnlFfaZo6nFawCrNHicKAAKWfgACdPzJSogT-m_ulm8CNgQ", "caption": "📄 Додатковий файл для четвертого дня ✅"}
+    2: {"file_id": "BQACAgIAAxkBAAMWaNlrlhmIMxyw83LziEfWwjhElE0AAvV8AALpGdBKtgyt93qRCbA2BA", "caption": "📄 Обіцяний файл до другого дня 🚀"},
+    4: {"file_id": "BQACAgIAAxkBAAMYaNlrtQABjOzo9ZfJkpx6ELmPGMsBAAL5fAAC6RnQSpLVoM23a5PnNgQ", "caption": "📄 Додатковий файл для четвертого дня ✅"}
 }
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
@@ -360,6 +360,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 
