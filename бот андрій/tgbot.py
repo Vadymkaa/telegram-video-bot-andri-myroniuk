@@ -6,6 +6,7 @@ from datetime import datetime, timezone, time
 from typing import List
 
 from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -215,6 +216,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     first_index = 0
     await context.bot.send_video(chat_id=chat_id, video=VIDEO_SOURCES[first_index], caption=BEFORE_TEXTS[first_index])
 
+     # Кнопка Instagram одразу після відео
+    keyboard = InlineKeyboardMarkup([[
+        InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")
+    ]])
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text="📌 Мій Instagram:",
+        reply_markup=keyboard
+    )
+
     # Оновлюємо last_index
     conn = get_db_conn()
     with conn:
@@ -335,6 +346,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
