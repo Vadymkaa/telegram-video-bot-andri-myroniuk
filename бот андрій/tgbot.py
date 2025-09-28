@@ -95,7 +95,7 @@ EXTRA_FILES = {
 }
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_TOKEN")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "7416498608:AAF_uTo0H3Obrr9eTfnJB9Zdd2KrChDFIjA")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -242,3 +242,4 @@ def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
     )
 
 # Інші хендлери (stop, status, help, echo_file) лишаються без змін...
+
