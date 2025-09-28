@@ -224,7 +224,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Плануємо after-text через 15 хв після першого відео
     context.job_queue.run_once(
         send_after_text_job,
-        when=15*60,  # 15 хвилин в секундах
+        when=2*60,  # 15 хвилин в секундах
         chat_id=chat_id,
         name=f"after_text_{chat_id}_first"
     )
@@ -335,5 +335,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
