@@ -193,7 +193,7 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=chat_id, text=AFTER_TEXTS[last_index])
 
         if last_index == 6:  # останній after-text 7 дня
-    context.job_queue.run_daily(
+            context.job_queue.run_daily(
         send_day8_text,
         time=time(7, 1),  # наступний день о 07:01
         chat_id=chat_id,
@@ -389,6 +389,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
