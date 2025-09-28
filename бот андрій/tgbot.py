@@ -210,7 +210,7 @@ def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
 
     context.job_queue.run_daily(
         send_next_video,
-        time=time(10, 1),
+        time=time(7, 1),
         chat_id=chat_id,
         name=name,
     )
@@ -320,7 +320,7 @@ async def post_init(app: Application) -> None:
         if last_index < 8:
             app.job_queue.run_daily(
                 send_next_video,
-                time=time(10, 1),
+                time=time(7, 1),
                 chat_id=chat_id,
                 name=f"daily_video_{chat_id}",
             )
@@ -353,5 +353,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
