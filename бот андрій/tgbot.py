@@ -253,7 +253,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
-        f"Вітаю, {update.effective_user.first_name or 'друже'}! "
         f"Ти отримав перше відео одразу, а далі щодня о 10:01 буде приходити 7 нових."
     )
 
@@ -358,6 +357,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 
