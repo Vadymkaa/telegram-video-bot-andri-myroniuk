@@ -221,6 +221,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     conn = get_db_conn()
     with conn:
+        # Створюємо користувача з last_index=-1
         conn.execute(
             UPSERT_USER_SQL,
             (chat_id, datetime.now(timezone.utc).isoformat(), -1),
@@ -228,18 +229,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     conn.close()
 
     # Перше відео одразу
-    first_video = VIDEO_SOURCES[0]
+    first_video_index = 0
     await context.bot.send_video(
         chat_id=chat_id,
-        video=first_video,
-        caption=BEFORE_TEXTS[0]
+        video=VIDEO_SOURCES[first_video_index],
+        caption=BEFORE_TEXTS[first_video_index]
     )
+
+    # Оновлюємо last_index = 0, щоб наступне відео було індекс 1
+    conn = get_db_conn()
+    with conn:
+        conn.execute(UPDATE_LAST_INDEX_SQL, (first_video_index, chat_id))
+    conn.close()
 
     schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
-        f"Ти отримав перше відео одразу, а далі щодня о 10:01 буде приходити нове."
+        "Ти отримав перше відео одразу, а далі щодня о 10:01 буде приходити наступне."
     )
+
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -353,6 +361,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 
