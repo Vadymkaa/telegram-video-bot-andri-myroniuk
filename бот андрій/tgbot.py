@@ -245,7 +245,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     schedule_user_job(context, chat_id)
 
     await update.message.reply_text(
-        "Ти отримав перше відео одразу, а далі щодня о 10:01 буде приходити наступне."
     )
 
 
@@ -361,6 +360,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 
