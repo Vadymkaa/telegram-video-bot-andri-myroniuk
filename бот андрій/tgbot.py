@@ -267,12 +267,21 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def echo_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message and update.message.video:
-        await update.message.reply_text(
-            f"Отримав file_id: <code>{update.message.video.file_id}</code>",
-            parse_mode=ParseMode.HTML,
-        )
+async def echo_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message:
+        # Відео
+        if update.message.video:
+            await update.message.reply_text(
+                f"Отримав video file_id: <code>{update.message.video.file_id}</code>",
+                parse_mode=ParseMode.HTML,
+            )
+        # Документ (PDF, DOCX, ZIP, тощо)
+        elif update.message.document:
+            await update.message.reply_text(
+                f"Отримав document file_id: <code>{update.message.document.file_id}</code>",
+                parse_mode=ParseMode.HTML,
+            )
+
 
 
 # ===================== INIT APP =====================
@@ -314,7 +323,10 @@ def main() -> None:
     application.add_handler(CommandHandler("stop", stop))
     application.add_handler(CommandHandler("status", status_cmd))
     application.add_handler(CommandHandler("help", help_cmd))
-    application.add_handler(MessageHandler(filters.VIDEO & filters.ChatType.PRIVATE, echo_video))
+    application.add_handler(MessageHandler(
+    (filters.VIDEO | filters.Document.ALL) & filters.ChatType.PRIVATE,
+    echo_file
+))
 
     application.bot.delete_webhook(drop_pending_updates=True)
     application.run_polling(close_loop=False)
@@ -322,3 +334,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
