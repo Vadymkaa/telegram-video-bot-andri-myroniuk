@@ -221,6 +221,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn.execute(UPDATE_LAST_INDEX_SQL, (first_index, chat_id))
     conn.close()
 
+    # Плануємо after-text через 15 хв після першого відео
+    context.job_queue.run_once(
+        send_after_text_job,
+        when=15*60,  # 15 хвилин в секундах
+        chat_id=chat_id,
+        name=f"after_text_{chat_id}_first"
+    )
+
+
     # Плануємо щоденні відео
     schedule_user_job(context, chat_id)
 
@@ -326,4 +335,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
