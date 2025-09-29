@@ -126,12 +126,7 @@ def get_db_conn():
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
-await context.bot.send_message(
-    chat_id=chat_id,
-    text=welcome_text,
-    parse_mode="HTML",
-    reply_markup=keyboard
-)
+
 
 # ===================== ХЕЛПЕР: захищене відео =====================
 async def send_protected_video(context: ContextTypes.DEFAULT_TYPE, chat_id: int, source: str, caption: str | None = None):
@@ -278,7 +273,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         VIDEO_SOURCES[first_index],
         caption=BEFORE_TEXTS[first_index]
     )
+await context.bot.send_message(
+    chat_id=chat_id,
+    text=welcome_text,
+    parse_mode="HTML",
+    reply_markup=keyboard
+)
 
+    
     # Кнопка Instagram одразу після відео
     keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")]])
     await context.bot.send_message(chat_id=chat_id, text="📌 Мій Instagram:", reply_markup=keyboard)
@@ -394,6 +396,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
