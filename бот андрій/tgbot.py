@@ -136,9 +136,16 @@ async def send_protected_video(context: ContextTypes.DEFAULT_TYPE, chat_id: int,
         chat_id=chat_id,
         video=source,
         caption=caption,
-        protect_content=True,      # ключове — блокує forward/save
-        supports_streaming=True    # нормальне програвання
+        parse_mode=ParseMode.HTML,  # Ось ключове!
+        protect_content=True,       # блокує forward/save
+        supports_streaming=True
     )
+    await send_protected_video(
+    context,
+    chat_id,
+    VIDEO_SOURCES[first_index],
+    caption=BEFORE_TEXTS[first_index]  # HTML-теги тепер обробляються
+)
 
 # ===================== ЛОГІКА ВІДПРАВКИ =====================
 async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
@@ -395,6 +402,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
