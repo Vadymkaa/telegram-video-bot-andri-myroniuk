@@ -126,6 +126,13 @@ def get_db_conn():
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
+await context.bot.send_message(
+    chat_id=chat_id,
+    text=welcome_text,
+    parse_mode="HTML",
+    reply_markup=keyboard
+)
+
 # ===================== ХЕЛПЕР: захищене відео =====================
 async def send_protected_video(context: ContextTypes.DEFAULT_TYPE, chat_id: int, source: str, caption: str | None = None):
     """Надсилає відео з блокуванням пересилання/збереження (офіційні клієнти)."""
@@ -387,5 +394,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
