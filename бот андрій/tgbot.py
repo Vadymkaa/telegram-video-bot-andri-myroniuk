@@ -273,13 +273,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         VIDEO_SOURCES[first_index],
         caption=BEFORE_TEXTS[first_index]
     )
-await context.bot.send_message(
-    chat_id=chat_id,
-    text=welcome_text,
-    parse_mode="HTML",
-    reply_markup=keyboard
-)
-
     
     # Кнопка Instagram одразу після відео
     keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")]])
@@ -396,6 +389,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
