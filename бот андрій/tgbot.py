@@ -165,7 +165,12 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
 
         # Текст перед відео
         if next_index < len(BEFORE_TEXTS):
-            await context.bot.send_message(chat_id=chat_id, text=BEFORE_TEXTS[next_index])
+           await context.bot.send_message(
+    chat_id=chat_id,
+    text=BEFORE_TEXTS[next_index],
+    parse_mode=ParseMode.HTML
+)
+
 
         source = VIDEO_SOURCES[next_index]
         await send_protected_video(
@@ -391,6 +396,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
