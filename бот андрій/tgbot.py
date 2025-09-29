@@ -358,4 +358,18 @@ async def post_init(app: Application):
 
 def main():
     if not BOT_TOKEN:
-        raise RuntimeError("Не задано BOT_TOKEN у
+        raise RuntimeError("Не задано BOT_TOKEN у змінній середовища!")
+
+    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("stop", stop))
+    app.add_handler(CommandHandler("status", status_cmd))
+    app.add_handler(CommandHandler("help", help_cmd))
+    app.add_handler(MessageHandler((filters.VIDEO | filters.Document.ALL) & filters.ChatType.PRIVATE, echo_file))
+
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
