@@ -5,8 +5,7 @@ import logging
 from datetime import datetime, timezone, time
 from typing import List
 
-from telegram import Update
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -96,7 +95,7 @@ EXTRA_FILES = {
 }
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "7416498608:AAF_uTo0H3Obrr9eTfnJB9Zdd2KrChDFIjA")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -120,12 +119,21 @@ UPDATE_LAST_INDEX_SQL = "UPDATE users SET last_index=? WHERE chat_id=?;"
 DELETE_USER_SQL = "DELETE FROM users WHERE chat_id=?;"
 GET_ALL_USERS_SQL = "SELECT chat_id, started_at, last_index FROM users;"
 
-
 def get_db_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
+# ===================== ХЕЛПЕР: захищене відео =====================
+async def send_protected_video(context: ContextTypes.DEFAULT_TYPE, chat_id: int, source: str, caption: str | None = None):
+    """Надсилає відео з блокуванням пересилання/збереження (офіційні клієнти)."""
+    await context.bot.send_video(
+        chat_id=chat_id,
+        video=source,
+        caption=caption,
+        protect_content=True,      # ключове — блокує forward/save
+        supports_streaming=True    # нормальне програвання
+    )
 
 # ===================== ЛОГІКА ВІДПРАВКИ =====================
 async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
@@ -149,12 +157,17 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
             job.schedule_removal()
             return
 
-        # Відео перед текстом
+        # Текст перед відео
         if next_index < len(BEFORE_TEXTS):
             await context.bot.send_message(chat_id=chat_id, text=BEFORE_TEXTS[next_index])
 
         source = VIDEO_SOURCES[next_index]
-        await context.bot.send_video(chat_id=chat_id, video=source, caption=f"🎬 Відео {next_index+1} з {len(VIDEO_SOURCES)}")
+        await send_protected_video(
+            context,
+            chat_id,
+            source,
+            caption=f"🎬 Відео {next_index+1} з {len(VIDEO_SOURCES)}"
+        )
 
         cur.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
         conn.commit()
@@ -171,7 +184,6 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
         logger.exception("Помилка при відправці відео користувачу %s", chat_id)
     finally:
         conn.close()
-
 
 async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
@@ -194,14 +206,15 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
 
         if last_index == 6:  # останній after-text 7 дня
             context.job_queue.run_daily(
-        send_day8_text,
-        time=time(7, 1),  # наступний день о 07:01
-        chat_id=chat_id,
-        name=f"day8_text_{chat_id}"
-    )
+                send_day8_text,
+                time=time(7, 1),  # наступний день о 07:01
+                chat_id=chat_id,
+                name=f"day8_text_{chat_id}"
+            )
 
         if day_num in EXTRA_FILES:
             extra = EXTRA_FILES[day_num]
+            # ФАЙЛИ — без protect_content (їх можна качати)
             await context.bot.send_document(chat_id=chat_id, document=extra["file_id"], caption=extra["caption"])
 
         job.schedule_removal()
@@ -214,7 +227,6 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
 async def send_day8_text(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
 
-    # Тут твій власний текст для 8-го дня
     day8_text = (
         """Ну що, вітаю, ти пройшов 7 днів інтенсиву «Стратегічне мислення у житті»!
 
@@ -238,14 +250,8 @@ async def send_day8_text(context: ContextTypes.DEFAULT_TYPE):
 — Андрій Миронюк"""
     )
 
-    # Кнопка Instagram
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk/")
-    ]])
-
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk/")]])
     await context.bot.send_message(chat_id=chat_id, text=day8_text, reply_markup=keyboard)
-
-
 
 # ===================== ХЕНДЛЕРИ =====================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -255,19 +261,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn.execute(UPSERT_USER_SQL, (chat_id, datetime.now(timezone.utc).isoformat(), -1))
     conn.close()
 
-    # Перше відео одразу
+    # Перше відео одразу (ЗАХИЩЕНЕ)
     first_index = 0
-    await context.bot.send_video(chat_id=chat_id, video=VIDEO_SOURCES[first_index], caption=BEFORE_TEXTS[first_index])
-
-     # Кнопка Instagram одразу після відео
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")
-    ]])
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text="📌 Мій Instagram:",
-        reply_markup=keyboard
+    await send_protected_video(
+        context,
+        chat_id,
+        VIDEO_SOURCES[first_index],
+        caption=BEFORE_TEXTS[first_index]
     )
+
+    # Кнопка Instagram одразу після відео
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")]])
+    await context.bot.send_message(chat_id=chat_id, text="📌 Мій Instagram:", reply_markup=keyboard)
 
     # Оновлюємо last_index
     conn = get_db_conn()
@@ -278,16 +283,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Плануємо after-text через 15 хв після першого відео
     context.job_queue.run_once(
         send_after_text_job,
-        when=15*60,  # 15 хвилин в секундах
+        when=15 * 60,  # 15 хвилин
         chat_id=chat_id,
         name=f"after_text_{chat_id}_first"
     )
 
-
     # Плануємо щоденні відео
     schedule_user_job(context, chat_id)
-
-
 
 def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     # Видаляємо старі job
@@ -301,7 +303,6 @@ def schedule_user_job(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
         name=f"daily_video_{chat_id}"
     )
 
-
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
@@ -314,7 +315,6 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
 
     await update.message.reply_text("🛑 Розсилка зупинена та прогрес видалено.")
-
 
 async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -337,20 +337,18 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode=ParseMode.HTML
     )
 
-
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 Я надсилаю відео щодня о 07:01.\n\n"
         "📌 Команди:\n/start — підписатися\n/stop — відписатися\n/status — переглянути прогрес\n/help — довідка"
     )
 
-
 async def echo_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Для зручності дебагу: відправляє file_id
     if update.message.video:
         await update.message.reply_text(f"🎥 video file_id: <code>{update.message.video.file_id}</code>", parse_mode=ParseMode.HTML)
     elif update.message.document:
         await update.message.reply_text(f"📂 document file_id: <code>{update.message.document.file_id}</code>", parse_mode=ParseMode.HTML)
-
 
 # ===================== INIT APP =====================
 async def post_init(app: Application):
@@ -370,7 +368,6 @@ async def post_init(app: Application):
             app.job_queue.run_daily(send_video_job, time=time(7, 1), chat_id=chat_id, name=f"daily_video_{chat_id}")
             logger.info("Відновив розсилку для chat_id=%s (last_index=%s)", chat_id, last_index)
 
-
 def main():
     if not BOT_TOKEN:
         raise RuntimeError("Не задано BOT_TOKEN у змінній середовища!")
@@ -386,13 +383,5 @@ def main():
 
     app.run_polling()
 
-
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
