@@ -297,9 +297,10 @@ await context.bot.send_video(
 
     # Оновлюємо last_index
 conn = get_db_conn()
-    with conn:
-        conn.execute(UPDATE_LAST_INDEX_SQL, (first_index, chat_id))
-    conn.close()
+with conn:
+    conn.execute(UPDATE_LAST_INDEX_SQL, (first_index, chat_id))
+conn.close()
+
 
     # Плануємо after-text через 15 хв після першого відео
     context.job_queue.run_once(
@@ -406,6 +407,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
