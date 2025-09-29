@@ -267,7 +267,7 @@ async def send_day8_text(context: ContextTypes.DEFAULT_TYPE):
 — Андрій Миронюк"""
     )
 
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk/")]])
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Підпишись на інсту 🎯", url="https://www.instagram.com/a_myroniuk/")]])
     await context.bot.send_message(chat_id=chat_id, text=day8_text, reply_markup=keyboard)
 
 # ===================== ХЕНДЛЕРИ =====================
@@ -288,7 +288,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     # Кнопка Instagram одразу після відео
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Ось мій Instagram", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")]])
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Підпишись на інсту 🎯", url="https://www.instagram.com/a_myroniuk?igsh=MWZmbGJrY3E1NDAyaw==")]])
     await context.bot.send_message(chat_id=chat_id, text="📌 Мій Instagram:", reply_markup=keyboard)
 
     # Оновлюємо last_index
@@ -402,6 +402,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
