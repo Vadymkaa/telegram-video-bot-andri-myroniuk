@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import logging
-from datetime import datetime, timezone, time
+from datetime import datetime, timezone, time, timedelta
 from typing import List
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -12,6 +12,7 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    ConversationHandler,
     filters,
 )
 
@@ -102,6 +103,10 @@ EXTRA_FILES = {
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "7416498608:AAF_uTo0H3Obrr9eTfnJB9Zdd2KrChDFIjA")
+
+# ==== ДОДАНО: пароль для /count та state розмови ====
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "22042004")
+COUNT_ASK_PWD = 1
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -210,6 +215,7 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
             job.schedule_removal()
             return
 
+    # --- початок оригінальної логіки ---
         last_index = row[0]
         day_num = last_index + 1
 
@@ -229,6 +235,7 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_document(chat_id=chat_id, document=extra["file_id"], caption=extra["caption"])
 
         job.schedule_removal()
+    # --- кінець оригінальної логіки ---
 
     except Exception:
         logger.exception("Помилка при відправці after_text %s", chat_id)
@@ -372,6 +379,47 @@ async def echo_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode=ParseMode.HTML
         )
 
+# ===================== ДОДАНО: /count з паролем =====================
+async def count_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # тільки у приватному чаті
+    if update.effective_chat.type != "private":
+        await update.message.reply_text("🔒 Команда доступна лише у приватному чаті з ботом.")
+        return ConversationHandler.END
+
+    await update.message.reply_text("🔐 Введи пароль:")
+    context.user_data["count_attempts"] = 0
+    return COUNT_ASK_PWD
+
+
+async def count_check_pwd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pwd = (update.message.text or "").strip()
+    if pwd != ADMIN_PASS:
+        attempts = context.user_data.get("count_attempts", 0) + 1
+        context.user_data["count_attempts"] = attempts
+        if attempts >= 3:
+            await update.message.reply_text("⛔️ Невірний пароль. Доступ заборонено.")
+            return ConversationHandler.END
+        await update.message.reply_text("❌ Невірний пароль. Спробуй ще раз:")
+        return COUNT_ASK_PWD
+
+    # пароль ОК — рахуємо користувачів
+    conn = get_db_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM users;")
+    total = cur.fetchone()[0]
+    conn.close()
+
+    await update.message.reply_text(
+        f"👥 Користувачів у боті: <b>{total}</b>",
+        parse_mode=ParseMode.HTML
+    )
+    return ConversationHandler.END
+
+
+async def count_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Скасовано.")
+    return ConversationHandler.END
+
 
 # ===================== INIT APP =====================
 async def post_init(app: Application):
@@ -402,6 +450,19 @@ def main():
     app.add_handler(CommandHandler("stop", stop))
     app.add_handler(CommandHandler("status", status_cmd))
     app.add_handler(CommandHandler("help", help_cmd))
+
+    # === ДОДАНО: /count як розмова з паролем ===
+    count_conv = ConversationHandler(
+        entry_points=[CommandHandler("count", count_cmd)],
+        states={
+            COUNT_ASK_PWD: [MessageHandler(filters.TEXT & ~filters.COMMAND, count_check_pwd)],
+        },
+        fallbacks=[CommandHandler("cancel", count_cancel)],
+        name="count_conv",
+        persistent=False,
+    )
+    app.add_handler(count_conv)
+
     app.add_handler(MessageHandler((filters.VIDEO | filters.Document.ALL) & filters.ChatType.PRIVATE, echo_file))
 
     app.run_polling()
@@ -409,5 +470,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
