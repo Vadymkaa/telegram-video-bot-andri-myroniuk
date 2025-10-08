@@ -168,7 +168,7 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
         next_index = last_index + 1
 
         if next_index >= len(VIDEO_SOURCES):
-            await context.bot.send_message(chat_id=chat_id, text="📌 Розсилка завершена!")
+            await context.bot.send_message(chat_id=chat_id, text="")
             job.schedule_removal()
             return
 
@@ -470,3 +470,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
