@@ -121,10 +121,10 @@ EXTRA_FILES = {
     2: {"file_id": "BQACAgIAAxkBAAMWaNlrlhmIMxyw83LziEfWwjhElE0AAvV8AALpGdBKtgyt93qRCbA2BA",
         "caption": "📄 А ще, як і обіцяв лови файл, який допоможе тобі поставити ціль та зробити хороший план 🚀"},
     4: {"file_id": "BQACAgIAAxkBAAMYaNlrtQABjOzo9ZfJkpx6ELmPGMsBAAL5fAAC6RnQSpLVoM23a5PnNgQ",
-        "caption": "📄 А ще додаю тобі файлик, який допоможе бути спокійним у будь-якій ситуації ✅"}
+        "caption": "📄 А ще додаю тобі файлик, який допоможе бути спокійним у будь-якій ситуації ✅"},
     7: {
         "file_id": "BQACAgIAAxkBAAIBbGjmyqrO2OSWWd8_JpDWOscuc9UaAAKWkQACUwo5S4ink2cSfZEvNgQ", 
-        "caption": "📄 І тримай закляття проти дурні 💪" }
+        "caption": "📄 І тримай закляття проти дурні 💪"}
 }
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
@@ -496,6 +496,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
