@@ -246,11 +246,12 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
         day_num = last_index + 1
 
  if last_index < len(AFTER_TEXTS):
-     await context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=AFTER_TEXTS[last_index],
         parse_mode=ParseMode.HTML
     )
+
 
 
         if last_index == 6:
@@ -507,6 +508,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
