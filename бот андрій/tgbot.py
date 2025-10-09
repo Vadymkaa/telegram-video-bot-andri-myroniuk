@@ -246,7 +246,12 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
         day_num = last_index + 1
 
         if last_index < len(AFTER_TEXTS):
-            await context.bot.send_message(chat_id=chat_id, text=AFTER_TEXTS[last_index])
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=AFTER_TEXTS[last_index],
+        parse_mode=ParseMode.HTML
+    )
+
 
         if last_index == 6:
             context.job_queue.run_daily(
@@ -296,7 +301,13 @@ async def send_day8_text(context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("Підпишись на інсту 🎯", url="https://www.instagram.com/a_myroniuk/")]
     ])
-    await context.bot.send_message(chat_id=chat_id, text=day8_text, reply_markup=keyboard)
+    await context.bot.send_message(
+    chat_id=chat_id,
+    text=day8_text,
+    reply_markup=keyboard,
+    parse_mode=ParseMode.HTML
+)
+
 
 
 # ===================== ХЕНДЛЕР start =====================
@@ -496,6 +507,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
