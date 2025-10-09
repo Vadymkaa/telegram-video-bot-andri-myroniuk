@@ -90,7 +90,7 @@ AFTER_TEXTS: List[str] = [
 [Результат] + [Вимірюється чим] + [Термін] + [Навіщо].
 А потім викресли цього тижня все, що не веде до цієї цілі.
 Ти відчуєш легкість, коли прибираєш зайве.
-І тримай бонус на бонус  ось промокод ACADEMY, який дає знижку 15% на усі набори MUDRI <a href="https://mudri.org">mudri.org</a> до кінця інтенсиву""",
+І тримай бонус на бонус — ось промокод <b>ACADEMY</b>, який дає знижку 15% на усі набори <a href="https://mudri.org">MUDRI</a> до кінця інтенсиву""",
     """🎯 Візьми одну актуальну проблему (робочу чи особисту) і розділи її на два списки: факти та інтерпретації.
 Ти здивуєшся, скільки стресу й емоцій виникає лише через припущення, а не через реальність.
 """,
@@ -118,13 +118,18 @@ Continue — що продовжую.
 ]
 
 EXTRA_FILES = {
-    2: {"file_id": "BQACAgIAAxkBAAMWaNlrlhmIMxyw83LziEfWwjhElE0AAvV8AALpGdBKtgyt93qRCbA2BA",
-        "caption": "📄 А ще, як і обіцяв лови файл, який допоможе тобі поставити ціль та зробити хороший план 🚀"},
-    4: {"file_id": "BQACAgIAAxkBAAMYaNlrtQABjOzo9ZfJkpx6ELmPGMsBAAL5fAAC6RnQSpLVoM23a5PnNgQ",
-        "caption": "📄 А ще додаю тобі файлик, який допоможе бути спокійним у будь-якій ситуації ✅"},
+    2: {
+        "file_id": "BQACAgIAAxkBAAMWaNlrlhmIMxyw83LziEfWwjhElE0AAvV8AALpGdBKtgyt93qRCbA2BA",
+        "caption": "📄 А ще, як і обіцяв лови файл, який допоможе тобі поставити ціль та зробити хороший план 🚀"
+    },
+    4: {
+        "file_id": "BQACAgIAAxkBAAMYaNlrtQABjOzo9ZfJkpx6ELmPGMsBAAL5fAAC6RnQSpLVoM23a5PnNgQ",
+        "caption": "📄 А ще додаю тобі файлик, який допоможе бути спокійним у будь-якій ситуації ✅"
+    },
     7: {
-        "file_id": "BQACAgIAAxkBAAIBbGjmyqrO2OSWWd8_JpDWOscuc9UaAAKWkQACUwo5S4ink2cSfZEvNgQ", 
-        "caption": "📄 І тримай закляття проти дурні 💪"}
+        "file_id": "BQACAgIAAxkBAAIBbGjmyqrO2OSWWd8_JpDWOscuc9UaAAKWkQACUwo5S4ink2cSfZEvNgQ",
+        "caption": "📄 І тримай закляття проти дурні 💪"
+    }
 }
 
 DB_PATH = os.environ.get("DB_PATH", "users.db")
@@ -241,17 +246,16 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
             job.schedule_removal()
             return
 
-    # --- початок оригінальної логіки ---
+        # --- початок оригінальної логіки ---
         last_index = row[0]
         day_num = last_index + 1
 
- if last_index < len(AFTER_TEXTS):
-     await context.bot.send_message(
-        chat_id=chat_id,
-        text=AFTER_TEXTS[last_index],
-        parse_mode=ParseMode.HTML
-    )
-
+        if last_index < len(AFTER_TEXTS):
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=AFTER_TEXTS[last_index],
+                parse_mode=ParseMode.HTML
+            )
 
         if last_index == 6:
             context.job_queue.run_daily(
@@ -266,7 +270,7 @@ async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_document(chat_id=chat_id, document=extra["file_id"], caption=extra["caption"])
 
         job.schedule_removal()
-    # --- кінець оригінальної логіки ---
+        # --- кінець оригінальної логіки ---
 
     except Exception:
         logger.exception("Помилка при відправці after_text %s", chat_id)
@@ -302,12 +306,11 @@ async def send_day8_text(context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Підпишись на інсту 🎯", url="https://www.instagram.com/a_myroniuk/")]
     ])
     await context.bot.send_message(
-    chat_id=chat_id,
-    text=day8_text,
-    reply_markup=keyboard,
-    parse_mode=ParseMode.HTML
-)
-
+        chat_id=chat_id,
+        text=day8_text,
+        reply_markup=keyboard,
+        parse_mode=ParseMode.HTML
+    )
 
 
 # ===================== ХЕНДЛЕР start =====================
@@ -416,6 +419,7 @@ async def echo_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode=ParseMode.HTML
         )
 
+
 # ===================== ДОДАНО: /count з паролем =====================
 async def count_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # тільки у приватному чаті
@@ -507,11 +511,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
