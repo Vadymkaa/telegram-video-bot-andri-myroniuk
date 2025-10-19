@@ -198,22 +198,21 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
         last_index = row[0]
         next_index = last_index + 1
 
-    if next_index >= len(VIDEO_SOURCES):
-        # Користувач пройшов усі 7 відео
-        if last_index >= len(VIDEO_SOURCES):
+        # ✅ Правильний відступ тут 👇
+        if next_index >= len(VIDEO_SOURCES):
+            # Користувач пройшов усі 7 відео → відправляємо фінальне повідомлення і зупиняємось
+            if last_index >= len(VIDEO_SOURCES):
+                job.schedule_removal()
+                return
+
+            with conn:
+                conn.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
+
+            await send_day8_text(context, chat_id)
             job.schedule_removal()
             return
 
-        conn = get_db_conn()
-        with conn:
-            conn.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
-        conn.close()
-
-        await send_day8_text(context, chat_id)
-
-        job.schedule_removal()
-        return
-
+        # Якщо ще залишилися відео → відправляємо наступне
         if next_index < len(BEFORE_TEXTS):
             await context.bot.send_message(
                 chat_id=chat_id,
@@ -231,6 +230,7 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
         cur.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
         conn.commit()
 
+        # Плануємо after-текст через 20 хвилин після відео
         context.job_queue.run_daily(
             send_after_text_job,
             time=time(7, 20),
@@ -242,6 +242,7 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
         logger.exception("Помилка при відправці відео користувачу %s", chat_id)
     finally:
         conn.close()
+
 
 
 async def send_after_text_job(context: ContextTypes.DEFAULT_TYPE):
@@ -522,5 +523,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
