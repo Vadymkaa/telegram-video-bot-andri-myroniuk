@@ -198,21 +198,21 @@ async def send_video_job(context: ContextTypes.DEFAULT_TYPE):
         last_index = row[0]
         next_index = last_index + 1
 
-              if next_index >= len(VIDEO_SOURCES):
-            # Користувач пройшов усі 7 відео
-            if last_index >= len(VIDEO_SOURCES):
-                job.schedule_removal()
-                return
-
-            conn = get_db_conn()
-            with conn:
-                conn.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
-            conn.close()
-
-            await send_day8_text(context, chat_id)
-
+    if next_index >= len(VIDEO_SOURCES):
+        # Користувач пройшов усі 7 відео
+        if last_index >= len(VIDEO_SOURCES):
             job.schedule_removal()
             return
+
+        conn = get_db_conn()
+        with conn:
+            conn.execute(UPDATE_LAST_INDEX_SQL, (next_index, chat_id))
+        conn.close()
+
+        await send_day8_text(context, chat_id)
+
+        job.schedule_removal()
+        return
 
         if next_index < len(BEFORE_TEXTS):
             await context.bot.send_message(
@@ -522,4 +522,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
